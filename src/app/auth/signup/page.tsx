@@ -1,3 +1,5 @@
+'use client';
+
 import {
     Card,
     CardHeader,
@@ -10,8 +12,44 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
+import { useState } from "react";
+import { signUp } from '@/lib/auth-client';
+import { useRouter } from 'next/navigation';
 
 const SignUpPage = () => {
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [username, setUsername] = useState('');
+    const [error, setError] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    const router = useRouter();
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsLoading(true);
+        setError('');
+        
+        try {
+            await signUp.email({
+                email,
+                password,
+                name: username,
+                callbackURL: '/dashboard'
+        }, {
+                onSuccess: () => {
+                    router.push('/dashboard');
+                },
+                onError: (ctx) => {
+                    setError(ctx.error?.message || 'Failed to create account');
+                }
+            });
+        } catch {
+            setError('Failed to create account');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     return (
         <div className="flex items-center justify-center w-full h-screen">
             <Card className="w-96">
@@ -20,7 +58,12 @@ const SignUpPage = () => {
                     <CardDescription>Create an account</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <form className='flex flex-col gap-6'>
+                    <form onSubmit={handleSubmit} className='flex flex-col gap-6'>
+                        {error && (
+                            <div className="p-3 text-sm bg-destructive/10 border border-destructive text-destructive rounded-md">
+                                {error}
+                            </div>
+                        )}
                         <div className="flex flex-col gap-2">
                             <Label htmlFor="username">Username</Label>
                             <Input 
@@ -28,6 +71,9 @@ const SignUpPage = () => {
                                 type="username"
                                 placeholder="Username"
                                 required
+                                value={username}
+                                onChange={(e) => setUsername(e.target.value)}
+                                disabled={isLoading}
                             />
                         </div>
                         <div className="flex flex-col gap-2">
@@ -37,6 +83,9 @@ const SignUpPage = () => {
                                 type="email"
                                 placeholder="example@email.com"
                                 required
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                disabled={isLoading}
                             />
                         </div>
                         <div className="flex flex-col gap-2">
@@ -46,9 +95,17 @@ const SignUpPage = () => {
                                 type="password"
                                 placeholder="••••••••"
                                 required
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                disabled={isLoading}
                             />
                         </div>
-                        <Button>Login</Button>
+                        <Button
+                        disabled={isLoading}
+                        type="submit"
+                        >
+                        {isLoading ? "Creating Account..." : "Create Account"}
+                        </Button>
                     </form>
                 </CardContent>
                 <CardFooter>
